@@ -31,12 +31,14 @@
       font-family: Arial, sans-serif;
       display: flex;
       justify-content: center;
-      align-items: center;
-      min-height: 100vh;
+      align-items: inherit;
+      min-height: 98vh;
+	  max-height: 100vh;
       margin: 0;
       background-color: var(--bg-color);
       color: var(--text-color);
       transition: background-color 0.3s, color 0.3s;
+	  overflow: hidden;
     }
     body.peer-mode {
       background-color: black !important;
@@ -45,21 +47,20 @@
       display: flex;
       gap: 2rem;
       padding: 2rem;
-      max-width: 1200px;
       margin: 0 auto;
     }
 
     .playlist-panel {
       width: var(--playlist-width);
-      background-color: var(--container-bg);
-      padding: 2rem;
-      border-radius: 10px;
-      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-      max-height: 90vh;
-      overflow-y: auto;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
+	  background-color: var(--container-bg);
+	  padding: 2rem;
+	  border-radius: 10px;
+	  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+	  max-height: 90vh;
+	  overflow-y: clip;
+	  display: flex;
+	  flex-direction: column;
+	  align-items: center;
     }
 
     .playlist-header {
@@ -70,12 +71,14 @@
 
     .playlist-list {
       list-style: none;
-      padding: 0;
-      width: 100%;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 0.5rem;
+	  padding: 0;
+	  width: 100%;
+	  display: flex;
+	  flex-direction: column;
+	  align-items: center;
+	  gap: 0.5rem;
+	  overflow: scroll;
+	  max-height: 90vh;
     }
 
     .playlist-list li {
@@ -111,8 +114,8 @@
     }
 
     .main-container {
-      flex: 1;
-      max-width: 600px;
+
+	  display: contents;
     }
     
     .peer-mode .main-container {
@@ -121,21 +124,25 @@
 
     .container {
       text-align: center;
-      background-color: var(--container-bg);
-      padding: 2rem;
-      border-radius: 10px;
-      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-      width: 90%;
-      max-width: 600px;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
+	  background-color: var(--container-bg);
+	  padding: 3rem;
+	  border-radius: 10px;
+	  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+	  width: fit-content;
+	  display: flex;
+	  flex-direction: column;
+	  align-items: center;
+	  overflow: clip;
+	  max-height: 90%;
+	  height: auto;
+	  min-height: inherit;
+	  flex: 1;
     }
     #timer {
       display: flex;
       justify-content: center;
       align-items: center;
-      font-size: clamp(2rem,10vw,12rem);
+      font-size: clamp(2rem,20vw,12rem);
       width: 100%;
       height: 100%;
 
@@ -162,7 +169,7 @@
       flex: 1;
     }
     #message {
-	  display: block;
+	  display: none;
       font-size: 1.5rem;
       margin-top: 1rem;
       font-weight: bold;
@@ -179,8 +186,8 @@
     }
     button {
       font-size: 1rem;
-      padding: 0.5rem 1rem;
-      margin: 0.5rem;
+      padding: 0.6rem 1rem;
+      margin: 1rem;
       cursor: pointer;
       background-color: var(--button-bg);
       color: var(--button-color);
@@ -199,9 +206,14 @@
       margin-top: 1rem;
       font-style: italic;
     }
-    #messageForm, #connectForm {
+	#connectForm {
+	  display: flex;
+	}
+	
+    #messageForm {
       margin-top: 1rem;
       width: 100%;
+	  display: none;
     }
     input[type="text"], input[type="number"], textarea {
       padding: 0.5rem;
@@ -210,8 +222,10 @@
       border-radius: 5px;
       background-color: var(--input-bg);
       color: var(--input-color);
-      width: calc(100% - 1rem);
+      width: calc(80% - 1rem);
       box-sizing: border-box;
+	  height: auto;
+	  align-self: center;
     }
     .peer-mode .container {
       padding: 0;
@@ -283,7 +297,7 @@
   <div class="panels-wrapper">
     <div class="playlist-panel">
       <div class="playlist-header">
-        <h2>Saved Times</h2>
+        <h2>Playlist</h2>
         <button onclick="clearPlaylist()" class="delete-btn">Clear All</button>
       </div>
       <ul class="playlist-list" id="playlistList"></ul>
@@ -291,7 +305,6 @@
 
     <div class="main-container">
       <div class="container">
-        <h1 id="title">TimerSync</h1>
         <div id="timer">00:00</div>
         <div id="timesUp">TIMES UP</div>
         <div id="message"></div>
@@ -305,13 +318,14 @@
           <button id="startBtn">Start</button>
           <button id="stopBtn">Stop</button>
           <button id="resetBtn">Reset</button>
+		  <button id="saveBtn">Save to Playlist</button>
           <div id="adjustButtons">
             <button id="addMinBtn">+1 min</button>
             <button id="subMinBtn">-1 min</button>
             <button id="addTenSecBtn">+10 sec</button>
             <button id="subTenSecBtn">-10 sec</button>
           </div>
-          <button id="saveBtn">Save to Playlist</button>
+          
           <div id="status"></div>
           <div id="peerId"></div>
           <div id="connectForm">
@@ -352,6 +366,7 @@
     const peerIdInput = document.getElementById('peerIdInput');
     const connectBtn = document.getElementById('connectBtn');
     const connectForm = document.getElementById('connectForm');
+	const messageForm = document.getElementById('messageForm');
 
     let remainingTime = 0;
     let timerInterval;
@@ -558,6 +573,8 @@
       document.body.classList.add('host-mode');
       connectForm.style.display = 'none';
 	  messageDisplay.style.display = 'none';
+	  peerIdDisplay.style.display = 'none';
+	  messageForm.style.display = 'inline-flex';
       updatePeerStatus();
     }
 
