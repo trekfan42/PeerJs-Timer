@@ -1,0 +1,630 @@
+<html>
+<head>
+  <base href="https://websimengine.com/timersync/">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TimerSync</title>
+  <style>
+    :root {
+      --bg-color: #0a0a0a;
+      --playlist-width: 280px;
+      --container-bg: #222;
+      --button-bg: #45a049;
+      --button-color: white;
+      --button-hover: #4CAF50;
+      --button-disabled: #555;
+      --input-bg: #333;
+      --input-color: #f0f0f0;
+      --input-border: #666;
+      --button-active: #ff4444;
+      --text-color: #f0f0f0;
+    }
+
+    body {
+      font-family: Arial, sans-serif;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      margin: 0;
+      background-color: var(--bg-color);
+      color: var(--text-color);
+      transition: background-color 0.3s, color 0.3s;
+    }
+    body.peer-mode {
+      background-color: black !important;
+    }
+    .panels-wrapper {
+      display: flex;
+      gap: 2rem;
+      padding: 2rem;
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+
+    .playlist-panel {
+      width: var(--playlist-width);
+      background-color: var(--container-bg);
+      padding: 2rem;
+      border-radius: 10px;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+      max-height: 90vh;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .playlist-header {
+      text-align: center;
+      width: 100%;
+      margin-bottom: 1rem;
+    }
+
+    .playlist-list {
+      list-style: none;
+      padding: 0;
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .playlist-list li {
+      background-color: #1a1a1a;
+      border-radius: 8px;
+      padding: 1rem;
+      width: 100%;
+      max-width: 240px;
+      position: relative;
+      transition: background-color 0.2s;
+      cursor: pointer;
+      text-align: center;
+    }
+
+    .playlist-list li:hover {
+      background-color: #252525;
+    }
+
+    .delete-btn {
+      position: absolute;
+      right: 10px;
+      top: 50%;
+      transform: translateY(-50%);
+      opacity: 0;
+      transition: opacity 0.2s;
+      background-color: #ff4444 !important;
+      padding: 2px 8px !important;
+      border-radius: 20px !important;
+    }
+
+    .playlist-list li:hover .delete-btn {
+      opacity: 1;
+    }
+
+    .main-container {
+      flex: 1;
+      max-width: 600px;
+    }
+    
+    .peer-mode .main-container {
+      max-width: 100%;
+    }
+
+    .container {
+      text-align: center;
+      background-color: var(--container-bg);
+      padding: 2rem;
+      border-radius: 10px;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+      width: 90%;
+      max-width: 600px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    #timer {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      font-size: clamp(2rem,10vw,12rem);
+      width: 100%;
+      height: 100%;
+
+    }
+    #timesUp {
+      display: none;
+      color: red;
+      font-size: 20vw;
+    }
+    .peer-mode #timesUp {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 100%;
+      text-align: center;
+    }
+    .peer-mode #timer {
+      font-size: 25vw;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: auto;
+      flex: 1;
+    }
+    #message {
+      font-size: 1.5rem;
+      margin-top: 1rem;
+      font-weight: bold;
+      min-height: 2em;
+      width: 100%;
+    }
+    .peer-mode #message {
+      font-size: 4vw;
+      position: absolute;
+      bottom: 2rem;
+      left: 0;
+      right: 0;
+      text-align: center;
+    }
+    button {
+      font-size: 1rem;
+      padding: 0.5rem 1rem;
+      margin: 0.5rem;
+      cursor: pointer;
+      background-color: var(--button-bg);
+      color: var(--button-color);
+      border: none;
+      border-radius: 5px;
+      transition: background-color 0.3s;
+    }
+    button:hover:not(:disabled) {
+      background-color: var(--button-hover);
+    }
+    button:disabled {
+      background-color: var(--button-disabled);
+      cursor: not-allowed;
+    }
+    #status, #peerId {
+      margin-top: 1rem;
+      font-style: italic;
+    }
+    #messageForm, #connectForm {
+      margin-top: 1rem;
+      width: 100%;
+    }
+    input[type="text"], input[type="number"], textarea {
+      padding: 0.5rem;
+      font-size: 1rem;
+      border: 1px solid var(--input-border);
+      border-radius: 5px;
+      background-color: var(--input-bg);
+      color: var(--input-color);
+      width: calc(100% - 1rem);
+      box-sizing: border-box;
+    }
+    .peer-mode .container {
+      padding: 0;
+      background-color: transparent;
+      box-shadow: none;
+      width: 100%;
+      max-width: none;
+      height: 100vh;
+      justify-content: center;
+      align-items: center;
+    }
+    .peer-mode .playlist-panel {
+      display: none;
+    }
+    #timeInputs {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      align-items: center;
+      margin-bottom: 1rem;
+    }
+    #timeInputs input {
+      width: 80px;
+      margin: 0.5rem;
+    }
+    #adjustButtons {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 0.5rem;
+      margin-top: 1rem;
+    }
+    #adjustButtons button {
+      width: 100%;
+      margin: 0;
+    }
+    .host-mode #message {
+      display: none;
+    }
+    .peer-mode .panels-wrapper {
+      align-items: normal;
+      padding: 0;
+      max-width: none;
+      height: 100vh;
+    }
+    @media (max-width: 480px) {
+      .container {
+        padding: 1rem;
+      }
+      
+      #timer {
+        font-size: 20vw;
+      }
+      
+      .peer-mode #timer {
+        font-size: 30vw;
+      }
+      
+      .peer-mode #message {
+        font-size: 6vw;
+      }
+      
+      #timeInputs input {
+        width: 60px;
+      }
+    }
+  </style>
+</head>
+<body class="dark-mode">
+  <div class="panels-wrapper">
+    <div class="playlist-panel">
+      <div class="playlist-header">
+        <h2>Saved Times</h2>
+        <button onclick="clearPlaylist()" class="delete-btn">Clear All</button>
+      </div>
+      <ul class="playlist-list" id="playlistList"></ul>
+    </div>
+
+    <div class="main-container">
+      <div class="container">
+        <h1 id="title">TimerSync</h1>
+        <div id="timer">00:00</div>
+        <div id="timesUp">TIMES UP</div>
+        <div id="message"></div>
+        <div id="controls">
+          <div id="timeInputs">
+            <input type="number" id="minutesInput" min="0" max="59" value="5">
+            <label for="minutesInput">min</label>
+            <input type="number" id="secondsInput" min="0" max="59" value="0">
+            <label for="secondsInput">sec</label>
+          </div>
+          <button id="startBtn">Start</button>
+          <button id="stopBtn">Stop</button>
+          <button id="resetBtn">Reset</button>
+          <div id="adjustButtons">
+            <button id="addMinBtn">+1 min</button>
+            <button id="subMinBtn">-1 min</button>
+            <button id="addTenSecBtn">+10 sec</button>
+            <button id="subTenSecBtn">-10 sec</button>
+          </div>
+          <button id="saveBtn">Save to Playlist</button>
+          <div id="status"></div>
+          <div id="peerId"></div>
+          <div id="connectForm">
+            <input type="text" id="peerIdInput" placeholder="Enter Host ID" oninput="this.value = this.value.toUpperCase()">
+            <button id="connectBtn">Connect to Host</button>
+          </div>
+          <div id="messageForm">
+            <textarea id="messageInput" rows="2" placeholder="Enter message for peers"></textarea>
+            <button id="sendMessageBtn">Send Message</button>
+            <button id="clearMessageBtn">Clear Message</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/peerjs/1.4.7/peerjs.min.js"></script>
+  <script>
+    const timer = document.getElementById('timer');
+    const startBtn = document.getElementById('startBtn');
+    const stopBtn = document.getElementById('stopBtn');
+    const resetBtn = document.getElementById('resetBtn');
+    const status = document.getElementById('status');
+    const peerIdDisplay = document.getElementById('peerId');
+    const controls = document.getElementById('controls');
+    const title = document.getElementById('title');
+    const messageInput = document.getElementById('messageInput');
+    const sendMessageBtn = document.getElementById('sendMessageBtn');
+    const clearMessageBtn = document.getElementById('clearMessageBtn');
+    const messageDisplay = document.getElementById('message');
+    const container = document.querySelector('.container');
+    const minutesInput = document.getElementById('minutesInput');
+    const secondsInput = document.getElementById('secondsInput');
+    const addMinBtn = document.getElementById('addMinBtn');
+    const subMinBtn = document.getElementById('subMinBtn');
+    const addTenSecBtn = document.getElementById('addTenSecBtn');
+    const subTenSecBtn = document.getElementById('subTenSecBtn');
+    const peerIdInput = document.getElementById('peerIdInput');
+    const connectBtn = document.getElementById('connectBtn');
+    const connectForm = document.getElementById('connectForm');
+
+    let remainingTime = 0;
+    let timerInterval;
+    let peer;
+    let conn;
+    let isRunning = false;
+    let isHost = true;
+    let isMessageVisible = false;
+    let connectedPeers = 0;
+
+    function updateTimer() {
+      const minutes = Math.floor(remainingTime / 60);
+      const seconds = remainingTime % 60;
+      timer.textContent = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+      
+      if (!isHost && remainingTime === 0) {
+        timer.style.display = 'none';
+        document.getElementById('timesUp').style.display = 'block';
+      } else {
+        timer.style.display = 'block';
+        document.getElementById('timesUp').style.display = 'none';
+      }
+    }
+
+    function startTimer() {
+      if (!isRunning && isHost) {
+        isRunning = true;
+        startBtn.disabled = true;
+        stopBtn.disabled = false;
+        timerInterval = setInterval(() => {
+          if (remainingTime > 0) {
+            remainingTime--;
+            updateTimer();
+            if (conn) conn.send({ action: 'update', remainingTime });
+          } else {
+            stopTimer();
+          }
+        }, 1000);
+        if (conn) conn.send({ action: 'start', remainingTime });
+      }
+    }
+
+    function stopTimer() {
+      if (isRunning && isHost) {
+        isRunning = false;
+        startBtn.disabled = false;
+        stopBtn.disabled = true;
+        clearInterval(timerInterval);
+        if (conn) conn.send({ action: 'stop', remainingTime });
+      }
+    }
+
+    function resetTimer() {
+      if (isHost) {
+        stopTimer();
+        remainingTime = parseInt(minutesInput.value) * 60 + parseInt(secondsInput.value);
+        updateTimer();
+        if (conn) conn.send({ action: 'reset', remainingTime });
+      }
+    }
+
+    function adjustTime(seconds) {
+      if (isHost) {
+        remainingTime = Math.max(0, remainingTime + seconds);
+        updateTimer();
+        if (conn) conn.send({ action: 'update', remainingTime });
+      }
+    }
+
+    startBtn.addEventListener('click', startTimer);
+    stopBtn.addEventListener('click', stopTimer);
+    resetBtn.addEventListener('click', resetTimer);
+    addMinBtn.addEventListener('click', () => adjustTime(60));
+    subMinBtn.addEventListener('click', () => adjustTime(-60));
+    addTenSecBtn.addEventListener('click', () => adjustTime(10));
+    subTenSecBtn.addEventListener('click', () => adjustTime(-10));
+
+    function generateShortId() {
+      const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+      let result = '';
+      for (let i = 0; i < 4; i++) {
+        result += characters.charAt(Math.floor(Math.random() * characters.length));
+      }
+      return result;
+    }
+
+    function initPeer() {
+      const shortId = generateShortId();
+      peer = new Peer(shortId);
+      
+      peer.on('open', (id) => {
+        peerIdDisplay.textContent = `Your ID: ${id}`;
+      });
+
+      peer.on('connection', (connection) => {
+        if (!conn) {
+          conn = connection;
+          setupConnection();
+          isHost = true;
+          updateUIForHost();
+        } else {
+          setupConnection();
+        }
+      });
+    }
+
+    function setupConnection() {
+      connectedPeers++;
+      updatePeerStatus();
+      
+      conn.on('data', (data) => {
+        if (!isHost) {
+          if (data.action === 'update') {
+            remainingTime = data.remainingTime;
+            updateTimer();
+          } else if (data.action === 'start') {
+            remainingTime = data.remainingTime;
+            startTimer();
+          } else if (data.action === 'stop') {
+            remainingTime = data.remainingTime;
+            stopTimer();
+            updateTimer();
+          } else if (data.action === 'reset') {
+            remainingTime = data.remainingTime;
+            resetTimer();
+          }
+        }
+        if (data.action === 'message') {
+          displayMessage(data.message);
+        } else if (data.action === 'clearMessage') {
+          clearMessage();
+        }
+      });
+
+      conn.on('open', () => {
+        updatePeerStatus();
+        if (!isHost) {
+          updateUIForPeer();
+        }
+      });
+
+      conn.on('close', () => {
+        connectedPeers--;
+        updatePeerStatus();
+        conn = null;
+        updateUIForDisconnected();
+      });
+    }
+
+    function updatePeerStatus() {
+      if (isHost) {
+        status.textContent = 'Peer connected';
+      } else {
+        status.textContent = 'Connected to host';
+      }
+    }
+
+    sendMessageBtn.addEventListener('click', () => {
+      const message = messageInput.value.trim();
+      if (message && conn) {
+        conn.send({ action: 'message', message });
+        displayMessage(message);
+        setMessageVisible(true);
+      }
+    });
+
+    clearMessageBtn.addEventListener('click', () => {
+      clearMessage();
+      if (conn) conn.send({ action: 'clearMessage' });
+      messageInput.value = '';
+      setMessageVisible(false);
+    });
+
+    function displayMessage(message) {
+      messageDisplay.textContent = message;
+    }
+
+    function clearMessage() {
+      messageDisplay.textContent = '';
+    }
+
+    function setMessageVisible(visible) {
+      isMessageVisible = visible;
+      sendMessageBtn.classList.toggle('active', visible);
+      sendMessageBtn.disabled = visible;
+      clearMessageBtn.disabled = !visible;
+    }
+
+    connectBtn.addEventListener('click', () => {
+      const peerId = peerIdInput.value.trim();
+      if (peerId) {
+        conn = peer.connect(peerId);
+        setupConnection();
+        isHost = false;
+      }
+    });
+
+    function updateUIForHost() {
+      document.body.classList.add('host-mode');
+      connectForm.style.display = 'none';
+      updatePeerStatus();
+    }
+
+    function updateUIForPeer() {
+      document.body.classList.add('peer-mode');
+      controls.style.display = 'none';
+      title.style.display = 'none';
+    }
+
+    function updateUIForDisconnected() {
+      document.body.classList.remove('peer-mode');
+      controls.style.display = 'block';
+      title.style.display = 'block';
+      connectForm.style.display = 'block';
+    }
+
+    // Playlist functionality
+    let playlist = JSON.parse(localStorage.getItem('timerPlaylist') || '[]');
+
+    function saveCurrentTime() {
+      const minutes = Math.floor(remainingTime / 60);
+      const seconds = remainingTime % 60;
+
+      const newItem = {
+        id: Date.now(),
+        minutes,
+        seconds,
+        timestamp: new Date().toLocaleTimeString()
+      };
+
+      playlist.push(newItem);
+      localStorage.setItem('timerPlaylist', JSON.stringify(playlist));
+      renderPlaylist();
+    }
+
+    function renderPlaylist() {
+      const list = document.getElementById('playlistList');
+      list.innerHTML = playlist.map(item => `
+        <li class="playlist-item" onclick="loadSavedTime(${item.id})">
+          <span>${item.minutes.toString().padStart(2, '0')}:${item.seconds.toString().padStart(2, '0')}</span>
+          <button class="delete-btn" onclick="deletePlaylistItem(${item.id})">×</button>
+        </li>
+      `).join('');
+    }
+
+    function deletePlaylistItem(id) {
+      playlist = playlist.filter(item => item.id !== id);
+      localStorage.setItem('timerPlaylist', JSON.stringify(playlist));
+      renderPlaylist();
+    }
+
+    function clearPlaylist() {
+      playlist = [];
+      localStorage.removeItem('timerPlaylist');
+      renderPlaylist();
+    }
+
+    function loadSavedTime(id) {
+      const item = playlist.find(i => i.id === id);
+      if (item && isHost) {
+        remainingTime = item.minutes * 60 + item.seconds;
+        minutesInput.value = item.minutes;
+        secondsInput.value = item.seconds;
+        updateTimer();
+        if (conn) conn.send({ action: 'reset', remainingTime });
+      }
+    }
+
+    document.getElementById('saveBtn').addEventListener('click', saveCurrentTime);
+
+    // Initial playlist render
+    renderPlaylist();
+
+    initPeer();
+
+    // Initialize button states
+    stopBtn.disabled = true;
+    clearMessageBtn.disabled = true;
+
+    // Initialize timer
+    resetTimer();
+  </script>
+</body>
+</html>
