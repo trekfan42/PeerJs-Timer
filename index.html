@@ -360,7 +360,9 @@
     let isHost = true;
     let isMessageVisible = false;
     let connectedPeers = 0;
-
+	
+	
+	
     function updateTimer() {
       const minutes = Math.floor(remainingTime / 60);
       const seconds = remainingTime % 60;
@@ -429,6 +431,9 @@
     subTenSecBtn.addEventListener('click', () => adjustTime(-10));
 
     function generateShortId() {
+	
+	  messageDisplay.style.display = 'none';
+		
       const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
       let result = '';
       for (let i = 0; i < 4; i++) {
@@ -551,12 +556,14 @@
     function updateUIForHost() {
       document.body.classList.add('host-mode');
       connectForm.style.display = 'none';
+	  messageDisplay.style.display = 'none';
       updatePeerStatus();
     }
 
     function updateUIForPeer() {
       document.body.classList.add('peer-mode');
       controls.style.display = 'none';
+	  messageDisplay.style.display = 'block';
       title.style.display = 'none';
     }
 
